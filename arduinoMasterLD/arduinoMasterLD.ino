@@ -1,17 +1,46 @@
-
-
 int ttl_out_bottomC = 12; // pinout for TTL pulse to bottom camera
 int ttl_out_status = 11; // pinout for TTL pulse to know general state of arduino (ie is it recording or not)
 int userInput;
 
 int freq = 60; // which sampling rate do you want, in Hz
-int pulse = (1000 / freq) / 2; //duration of the high state
+float pulse = (1000 / freq) / 2; //duration of the high state
 int recording_length_min = 10;  //duration of the recording, in minutes
-int recording_length_ms = recording_length_min * 60000; //convert it in ms
-int itt = 2 * pulse;
-int num_loops = recording_length_ms / itt; //1 loop equals 2 x pulse, so how many loops do you need to cover your recording session
+long recording_length_ms = recording_length_min * 60000; //convert it in ms
+long startedTime = 0;
+bool startTimer = false;
 
+void executeOnTimer() {
+  if(startTimer) {
+    digitalWrite(ttl_out_bottomC, HIGH);
+    delay(pulse);
+    digitalWrite(ttl_out_bottomC, LOW);
+    delay(pulse);
+    
+    if ((millis() - startedTime) > recording_length_ms ) {
+      digitalWrite(ttl_out_status, LOW);
+      digitalWrite(ttl_out_bottomC, LOW);
+      Serial.println("Time's up! Recording stopped");
+      startTimer = false;
+    }
+  }
+}
 
+void manageUserInputs() {
+  if (Serial.available() > 0) {
+    userInput = Serial.parseInt();
+
+    if  (userInput == 1) {
+      digitalWrite(ttl_out_status, HIGH);
+      Serial.println("Recording started");
+      startTimer = true;
+      startedTime = millis();
+    } else if (userInput == 0) {
+      digitalWrite(ttl_out_status, LOW);
+     	startTimer = false;
+      Serial.println("Master asks, Arduino obeys. Recording stopped");
+    }
+  }
+}
 
 void setup() {
   //open the serial port
@@ -24,32 +53,6 @@ void setup() {
 }
 
 void loop() {
-
-  if (Serial.available() > 0) {
-    userInput = Serial.parseInt();
-
-    if  (userInput == 1) {
-      digitalWrite(ttl_out_status, HIGH);
-      Serial.println("Recording started");
-      int var = 0;
-      do {
-        digitalWrite(ttl_out_bottomC, HIGH);
-        delay(pulse);
-        digitalWrite(ttl_out_bottomC, LOW);
-        delay(pulse);
-        var++;
-      } while (var < num_loops);
-
-      if (var = num_loops) {
-        digitalWrite(ttl_out_status, LOW);
-        digitalWrite(ttl_out_bottomC, LOW);
-        Serial.println("Time's up! Recording stopped");
-      }
-
-      else if (userInput == 0) {
-        digitalWrite(ttl_out_status, LOW);
-        Serial.println("Master asks, Arduino obeys. Recording stopped");
-      }
-    }
-  }
+  executeOnTimer();
+  manageUserInputs();
 }
