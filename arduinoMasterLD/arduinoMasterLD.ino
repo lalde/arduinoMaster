@@ -1,5 +1,5 @@
-int ttl_out_bottomC = 12; // pinout for TTL pulse to bottom camera
-int ttl_out_status = 11; // pinout for TTL pulse to know general state of arduino (ie is it recording or not)
+int ttl_out_bottomC = 7; // pinout for TTL pulse to bottom camera
+int ttl_out_status = 13; // pinout for TTL pulse to know general state of arduino (ie is it recording or not)
 int userInput;
 
 int freq = 60; // which sampling rate do you want, in Hz
